@@ -22,24 +22,31 @@ To mitigate the inehrent bias when entirely relying on a solver to draw samples,
 
 This strategy is implemented in the class `pycosa.sampling.DiversityPromotionSampler`.
 
-Orignal Paper: [_Combining Multi-Objective Search and Constraint Solving for Configuring Large Software Product Lines_](https://doi.org/10.1109/ICSE.2015.69)
+Orignal Paper: 
 
 ##### 2c) Distance-based Sampling
 This strategy is implemented in the class `pycosa.sampling.DistanceSampler`.
 
-Orignal Paper: [_Distance-Based Sampling of Software Configuration Spaces_](https://doi.org/10.1109/ICSE.2015.69)
+Orignal Paper: 
 
 ##### 2d) Sampling with Binary Decision Diagrams (BDD)
 This strategy is implemented in the class `pycosa.sampling.BBDSampler`.
 
-Orignal Paper: [_Finding near-optimal configurations in product lines by random sampling_](https://doi.org/10.1145/3106237.3106273)
+Orignal Paper: 
 
 #### 3 'Quality of Sampling'
 ##### 3a) Feature Balance
-Related paper using feature balance heuristic: [Cost-Efficient Sampling for Performance Prediction of Configurable Systems](https://dl.acm.org/doi/10.1109/ASE.2015.45)
+Related paper using feature balance heuristic: 
 
 ##### 3b) Variance Inflation Factor
 
 #### 4 Importance Sampling
 This strategy is implemented in the class `pycosa.sampling.ImportanceSampler`.
 
+## Literatur
+| Sampling Strategy        | Paper/Article           | 
+| ------------- |-------------|
+| BDD Sampling | [_Finding near-optimal configurations in product lines by random sampling_](https://doi.org/10.1145/3106237.3106273) | 
+| Distance-based Sampling | [_Distance-Based Sampling of Software Configuration Spaces_](https://doi.org/10.1109/ICSE.2015.69)      |  
+| Feature-balance Sampling | [_Cost-Efficient Sampling for Performance Prediction of Configurable Systems_](https://dl.acm.org/doi/10.1109/ASE.2015.45)  |  
+| Diversity Promotion Sampling | [_Combining Multi-Objective Search and Constraint Solving for Configuring Large Software Product Lines_](https://doi.org/10.1109/ICSE.2015.69) |
