@@ -8,6 +8,7 @@ from pycosa.features import FeatureModel
 from pycosa.sampling import DiversityPromotionSampler, NaiveRandomSampler, DistanceSampler
 
 
+
 class TestImportanceDistributionSampler(TestCase):
 
     def setUp(self):
