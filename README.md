@@ -5,4 +5,4 @@ This is a collection of sampling strategies for (binary) configuration spaces. T
 * [Documentation](docs/DOCUMENTATION.md)
 * [Code Examples](docs/EXAMPLES.md)
 
-For questions or ideas, hit me up on (Twitter)[twitter.com/stefanmbr]! :)
+For questions or ideas, hit me up on [Twitter](twitter.com/stefanmbr)! :)
