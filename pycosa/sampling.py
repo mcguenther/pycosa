@@ -66,6 +66,7 @@ class CoverageSampler(Sampler):
         n_options = len(self.fm.feature_dict)
   
         clauses = self.fm.clauses
+        constraints = self.fm.constraints
         target = self.fm.target
         
         # Identify all non-mandatory (=optional) features
@@ -74,6 +75,7 @@ class CoverageSampler(Sampler):
 
             solver = z3.Solver()
             solver.add(clauses)
+            solver.add(constraints)
             
             # check, if we can set opt to zero
             solver.add( z3.Extract(opt, opt, target) == 0 )
@@ -88,7 +90,9 @@ class CoverageSampler(Sampler):
             
         # add feature model clauses
         n_options = len(self.fm.feature_dict)
-        constraints = self.fm.clauses
+        clauses = self.fm.clauses
+        constraints = self.fm.constraints
+        optimizer.add(clauses)
         optimizer.add(constraints)
             
         # add previous solutions as constraints
@@ -119,6 +123,10 @@ class CoverageSampler(Sampler):
         
         n_options = len(self.fm.feature_dict)
         constraints = self.fm.clauses
+
+        # add non-boolean constraints
+        constraints += self.fm.constraints
+
         target = self.fm.target
         
         logging.debug("Discarding {} mandatory options.".format(n_options - len(opts)))
@@ -189,6 +197,7 @@ class DistanceSampler(Sampler):
         origin = z3.BitVecVal("0" * n_options, n_options)
   
         clauses = self.fm.clauses
+        constraints = self.fm.constraints
         target = self.fm.target
         
         clauses = z3.And(clauses)
@@ -198,6 +207,7 @@ class DistanceSampler(Sampler):
         solvers = {i: z3.Solver() for i in range(1, n_options)}
         for index in solvers.keys(): 
             solvers[index].add(clauses)
+            solvers[index].add(constraints)
             solvers[index].add(DistanceSampler.__hamming(origin, target, 1) == index)
             
         # set of existing solutions
@@ -251,13 +261,15 @@ class NaiveRandomSampler(Sampler):
         
     def sample(self, sample_size: int):  
         clauses = self.fm.clauses
+        constraints = self.fm.constraints
         target = self.fm.target
         
         solver = z3.Solver()
         
         # add clauses to solver instance
         solver.add(z3.And(clauses))
-        
+        solver.add(constraints)
+
         # container for configurations
         solutions = []
         
@@ -304,11 +316,13 @@ class DiversityPromotionSampler(Sampler):
             self.fm.shuffle()
             
             clauses = self.fm.clauses
+            constraints = self.fm.constraints
             target = self.fm.target
             
             # feed constraints to solver
             solver = z3.Solver()
             solver.add(z3.And(clauses))
+            solver.add(constraints)
             
             # add previous solutions (shuffled) to new solver
             if len(solutions) > 1: 
@@ -350,9 +364,9 @@ class BDDSampler(Sampler):
         '''
         
         n_options = len(self.fm.feature_dict)
-        cnf_expression_str = FeatureModel._dimacs_to_str(fm.clauses_raw, fm.feature_dict)
+        cnf_expression_str = FeatureModel._dimacs_to_str(self.fm.clauses_raw, self.fm.feature_dict)
         
-        partitions = FeatureModel._compute_partitions(expre, fm.feature_dict)
+        partitions = FeatureModel._compute_partitions(cnf_expression_str, self.fm.feature_dict)
 
         logging.warning('This sampling strategy might take while... grab a coffee meanwhile.')
         
@@ -398,6 +412,7 @@ class DistributionSampler(Sampler):
         
         # construct solver
         clauses = self.fm.clauses
+        constraints = self.fm.constraints
             
         # construct columns for features
         columns = list(self.fm.feature_dict.values())
