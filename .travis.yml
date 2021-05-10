@@ -14,9 +14,6 @@ python:
 before_install:
   - python --version
   - pip install -U pip
-  - pip install -U pytest
-  - pip install codecov
-  - pip install git+https://github.com/smba/pycosa.git@main
 
 install:
     - pip install -r requirements.txt
@@ -24,6 +21,3 @@ install:
 script:
     - python tests/test_sampling.py
     - python tests/test_features.py
-
-after_success:
-  - codecov
