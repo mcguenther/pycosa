@@ -3,7 +3,7 @@
 * 
 ## Sampling Strategies
 #### 1) Main Effects / Coverage Sampling
-This class of strategies is implemented in the class `pycosa.sampling.CoverageSampler`.
+This class of strategies is implemented in the class [`pycosa.sampling.CoverageSampler`](https://google.de).
 
 ##### 1a) t-wise Sampling
 The main idea behind this class of strategies it to unveil the individual effect ('main effect') of single features (t-wise; `t = 1`) or higher-order (t-wise; `t > 1`) interactions. The upper bound for the number of configurations returned by a strategy is the binomial coefficient ('n over t') as we generate a sample configuration for each possible interaction of degree t. For each of those, the relevant features are enabled while all (or at least as few as possible) are disabled to extract the effect of the enabled features. The sampling strategy is exhaustively generating all configurations, but does not scale well to higher order interactions.
@@ -43,10 +43,10 @@ Related paper using feature balance heuristic:
 #### 4 Importance Sampling
 This strategy is implemented in the class `pycosa.sampling.ImportanceSampler`.
 
-## Literatur
+## Literature
 | Sampling Strategy        | Paper/Article           | 
 | ------------- |-------------|
-| BDD Sampling | [_Finding near-optimal configurations in product lines by random sampling_](https://doi.org/10.1145/3106237.3106273) | 
-| Distance-based Sampling | [_Distance-Based Sampling of Software Configuration Spaces_](https://doi.org/10.1109/ICSE.2015.69)      |  
-| Feature-balance Sampling | [_Cost-Efficient Sampling for Performance Prediction of Configurable Systems_](https://dl.acm.org/doi/10.1109/ASE.2015.45)  |  
-| Diversity Promotion Sampling | [_Combining Multi-Objective Search and Constraint Solving for Configuring Large Software Product Lines_](https://doi.org/10.1109/ICSE.2015.69) |
+| BDD Sampling | J. Oh, D. Batory, M. Myers, and N. Siegmund. 2017. [_Finding near-optimal configurations in product lines by random sampling_](https://doi.org/10.1145/3106237.3106273). In Proceedings of the 2017 11th Joint Meeting on Foundations of Software Engineering (ESEC/FSE 2017). Association for Computing Machinery, New York, NY, USA, 61–71. | 
+| Distance-based Sampling | C. Kaltenecker, A. Grebhahn, N. Siegmund, J. Guo and S. Apel, [_Distance-Based Sampling of Software Configuration Spaces_](https://ieeexplore.ieee.org/abstract/document/8812049), 2019 IEEE/ACM 41st International Conference on Software Engineering (ICSE), 2019, pp. 1084-1094. |  
+| Feature-balance Sampling | A. Sarkar, J. Guo, Norbert Siegmund, S. Apel, and K. Czarnecki. 2015. [_Cost-Efficient Sampling for Performance Prediction of Configurable Systems_](https://dl.acm.org/doi/10.1109/ASE.2015.45) In Proceedings of the 30th IEEE/ACM International Conference on Automated Software Engineering (ASE '15). IEEE Press, 342–352.  |  
+| Diversity Promotion Sampling | C. Henard, M. Papadakis, M. Harman and Y. Le Traon, [_Combining Multi-Objective Search and Constraint Solving for Configuring Large Software Product Lines_](https://doi.org/10.1109/ICSE.2015.69), 2015 IEEE/ACM 37th IEEE International Conference on Software Engineering, 2015, pp. 517-528. |
