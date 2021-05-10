@@ -16,6 +16,7 @@ before_install:
   - pip install -U pip
   - pip install -U pytest
   - pip install codecov
+  - pip install git+https://github.com/smba/pycosa.git@main
 
 install:
     - pip install -r requirements.txt
