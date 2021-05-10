@@ -3,6 +3,7 @@ from pycosa.features import FeatureModel
 
 class TestFeatureModel(TestCase):
     def test_shuffle(self):
+        print(1)
         self.assertTrue(True)
 
 
