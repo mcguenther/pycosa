@@ -233,6 +233,7 @@ class DistanceSampler(Sampler):
         h = v1 ^ v2
         s = max(target.bit_length(), v1.size().bit_length())
         return z3.Sum([z3.ZeroExt(s, z3.Extract(i, i, h)) for i in range(v1.size())])
+
     
 class NaiveRandomSampler(Sampler):
     '''
