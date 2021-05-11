@@ -1,4 +1,4 @@
-![test-main](https://github.com/smba/pycosa/actions/workflows/test-main.yml/badge.svg)
+![test-main](https://github.com/smba/pycosa/actions/workflows/test.yml/badge.svg)
 [![codecov](https://codecov.io/gh/smba/pycosa/branch/main/graph/badge.svg?token=LUVIOPK5B1)](https://codecov.io/gh/smba/pycosa)
 
 ![test-dev](https://github.com/smba/pycosa/actions/workflows/test-dev.yml/badge.svg)
