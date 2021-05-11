@@ -1,5 +1,8 @@
-name: cov
-on: [push]
+name: test
+on:
+  push:
+    branches:
+      - main
 jobs:
   run:
     runs-on: ${{ matrix.os }}
