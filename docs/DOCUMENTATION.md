@@ -1,6 +1,10 @@
 # Documentation
 * [Sampling](#sampling-strategies)
-* 
+
+
+## Feature Models
+So far, only DIMACS is supported...
+
 ## Sampling Strategies
 #### 1) Main Effects / Coverage Sampling
 This class of strategies is implemented in the class [`pycosa.sampling.CoverageSampler`](https://google.de).
