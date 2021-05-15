@@ -13,3 +13,4 @@ For questions or ideas, hit me up on [Twitter](https://twitter.com/stefanmbr)! :
 #### `main`
 ![test-main](https://github.com/smba/pycosa/actions/workflows/test.yml/badge.svg) [![codecov](https://codecov.io/gh/smba/pycosa/branch/main/graph/badge.svg?token=LUVIOPK5B1)](https://codecov.io/gh/smba/pycosa)
 
+#### `dev`
