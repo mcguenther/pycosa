@@ -1,18 +1,22 @@
 from unittest import TestCase
-
-import pandas as pd
-import numpy as np
-import itertools
+from . import THIS_DIR
+import logging
 
 from pycosa.features import FeatureModel
-from pycosa.sampling import DiversityPromotionSampler, NaiveRandomSampler, DistanceSampler
+from pycosa.sampling import CoverageSampler
 
-
-
-class TestImportanceDistributionSampler(TestCase):
+class TestCoverageSampler(TestCase):
 
     def setUp(self):
-        pass
+        self.fm_h2 = FeatureModel(THIS_DIR+'/feature_models/h2.dimacs')
 
+    def test_sample(self):
+        sampler = CoverageSampler(self.fm_h2)
 
-
+        for t in range(1,4):
+            logging.warning('Sampling {}-wise'.format(t))
+            s = sampler.sample(t, negwise=False)
+            logging.warning('found {} configurations'.format(len(s)))
+            logging.warning('Sampling negative {}-wise'.format(t))
+            s = sampler.sample(t, negwise=True)
+            logging.warning('found {} configurations'.format(len(s)))
