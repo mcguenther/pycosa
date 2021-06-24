@@ -340,3 +340,142 @@ class DiversityPromotionSampler(Sampler):
         solutions = self.sample_to_dataframe(solutions)
 
         return solutions
+
+
+class BDDSampler(Sampler):
+    '''
+    This class implements consistent uniform random sampling by partitioning the configuration space. The idea
+    is to construct a binary decision diagram (BDD) for an existing feature model. Each distinct path in the BDD
+    represents a partition of the confiuration space. For each path, for some, but not all configuration options values
+    are assigned, leaving the un-assigned free to select from. By sampling across such partitions, one obtains a true
+    random set of valid configurations.
+
+    The construction of a BBD is time-consuming and does not scale well for large and complex feature models, however,
+    this approach asserts randomness of the set of sampled configurations.
+
+    References:
+    Jeho Oh, Don Batory, Margaret Myers, and Norbert Siegmund. 2017. Finding near-optimal configurations
+    in product lines by random sampling. In Proceedings of the 2017 11th Joint Meeting on Foundations of
+    Software Engineering (ESEC/FSE 2017). Association for Computing Machinery, New York, NY, USA, 61–71.
+    DOI:https://doi.org/10.1145/3106237.3106273
+    '''
+    def __init__(self, fm: FeatureModel):
+        self.fm = fm
+
+    def sample(self, sample_size: int) -> pd.DataFrame:
+        '''
+        '''
+        
+        n_options = len(self.fm.feature_dict)
+        cnf_expression_str = FeatureModel._dimacs_to_str(self.fm.clauses_raw, self.fm.feature_dict)
+        
+        partitions = FeatureModel._compute_partitions(cnf_expression_str, self.fm.feature_dict)
+
+        logging.warning('This sampling strategy might take while... grab a coffee meanwhile.')
+        
+        # calculate proportional size for each partition
+        all_configs = sum([2**(n_options - len(p)) for p in partitions])
+        props = [2**(n_options - len(p)) / all_configs for p in partitions]
+        
+        samples = []
+        for i, p in enumerate(partitions):
+            free = n_options - len(p)
+            p_sample_size = int(sample_size * props[i])
+            sample = pd.DataFrame(columns=list(self.fm.feature_dict.values()), index=np.arange(p_sample_size))
+            
+            for feature in p:
+                sample[feature] = p[feature]
+            
+            open_features = set(list(self.fm.feature_dict.values())) - set(list(p.keys()))
+            
+            sample[list(open_features)] = np.random.choice([True, False], size=(p_sample_size, len(open_features)))
+            samples.append(sample)
+        
+        out_sample = pd.concat(samples)
+        return out_sample
+                
+class GroupSampler(Sampler):
+
+    def __init__(self, fm: FeatureModel):
+        self.fm = fm
+
+    def _abs(self, x):
+        return z3.If(x >= 0, x, -x)
+
+    def _is_mandatory(self, i):
+        clauses = self.fm.clauses
+        constraints = self.fm.constraints
+        target = self.fm.target
+        n_options = len(self.fm.feature_dict)
+
+        solver = z3.Solver()
+        solver.add(clauses)
+        solver.add(constraints)
+
+        mandatory_constraint = z3.Extract(i, i, target) == 0
+        solver.add(mandatory_constraint)
+
+        return (solver.check() != z3.sat)
+
+    def sample(self, n_groupings: int) -> pd.DataFrame:
+        clauses = self.fm.clauses
+        constraints = self.fm.constraints
+        target = self.fm.target
+        n_options = len(self.fm.feature_dict)
+
+        # number of groups per grouping
+        n_groups = 2#int(np.log2(n_options))
+        groups = [z3.BitVec('group_{}'.format(i), n_options) for i in range(n_groups)]
+
+        # build modified clauses
+        modified_clauses = []
+        for clause in clauses:
+            for group in groups:
+                new_clause = z3.substitute(clause, (target, group))
+                modified_clauses.append(new_clause)
+
+        # build modified constraints
+        modified_constraints = []
+        for constraint in constraints:
+            for group in groups:
+                new_constraint = z3.substitute(constraint, (target, group))
+                modified_constraints.append(constraint)
+
+        # group sampling side constraints
+        side_constraints = []
+        # 1) every group should at least have one feature
+        for group in groups:
+            not_empty_constraint = z3.Sum([z3.ZeroExt(n_options, z3.Extract(i, i, group)) for i in range(n_options)]) > 1
+            side_constraints.append(not_empty_constraint)
+
+        # 2) difference constraint: each feature can only be enabled once in one partition
+        for i in range(n_options):
+            if not self._is_mandatory(i):
+                difference_constraint = z3.Sum([z3.ZeroExt(n_options, z3.Extract(i, i, group)) for group in groups]) == 1
+                side_constraints.append(difference_constraint)
+
+        solver = z3.Optimize()
+        solver.add(modified_clauses)
+        solver.add(modified_constraints)
+        solver.add(side_constraints)
+
+        # 3) balance constraints
+        for group in groups:
+            func = sum([self._abs((n_options // n_groupings) - z3.Sum([z3.ZeroExt(n_options, z3.Extract(i, i, group)) for i in range(n_options)]))])
+            solver.minimize(func)
+
+
+        for i in range(n_groupings):
+            print(i, '----')
+            if solver.check() == z3.sat:
+                solution = solver.model()
+                for group in groups:
+                    x = FeatureModel.int_to_config(solution[group].as_long(), n_options)
+                    print(x)
+                    for group_ in groups:
+                        solver.add(group != solution[group_])
+            else:
+                print('unsat')
+                break
+
+        return None
