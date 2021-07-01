@@ -3,8 +3,7 @@ import logging
 import z3
 import numpy as np
 import random 
-from bitarray.util import int2ba
-from numpy import dtype
+#from bitarray.util import int2ba
 
 import networkx as nx
 from pyeda.inter import expr, expr2bdd
