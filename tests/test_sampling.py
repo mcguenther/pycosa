@@ -1,12 +1,11 @@
-from unittest import TestCase
-from . import THIS_DIR
 import logging
-
-import matplotlib.pyplot as plt
+from unittest import TestCase
 
 import pandas as pd
+
 from pycosa.features import FeatureModel
 from pycosa.sampling import CoverageSampler, NaiveRandomSampler, DiversityPromotionSampler, DistanceSampler
+from . import THIS_DIR
 
 '''
 each sampling strategy is tested for
