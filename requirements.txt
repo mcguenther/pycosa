@@ -4,3 +4,4 @@ numpy
 networkx
 pyeda
 xmltodict
+pyDOE2
