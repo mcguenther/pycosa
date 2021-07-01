@@ -404,6 +404,8 @@ class BDDSampler(Sampler):
     in product lines by random sampling. In Proceedings of the 2017 11th Joint Meeting on Foundations of
     Software Engineering (ESEC/FSE 2017). Association for Computing Machinery, New York, NY, USA, 61–71.
     DOI:https://doi.org/10.1145/3106237.3106273
+
+    nice
     '''
     def __init__(self, fm: FeatureModel):
         self.fm = fm
