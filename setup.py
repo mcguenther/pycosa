@@ -25,9 +25,10 @@ install_requires = [
 	"numpy",
 	"pandas",
 	"z3-solver",
-	"bitarray",
+	"xmltodict",
 	"pyeda",
-	"networkx"
+	"networkx",
+	"pyDOE2"
 ]
 
 if __name__ == "__main__":
