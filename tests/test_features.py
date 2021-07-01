@@ -1,13 +1,7 @@
 from unittest import TestCase
 from pycosa.features import FeatureModel
-
-class TestFeatureModel(TestCase):
-    def test_shuffle(self):
-        print(1)
-        fm = FeatureModel('tests/feature_models/h2.dimacs')
-        self.assertTrue(True)
-
-
+from pycosa.sampling import NaiveRandomSampler
+from . import THIS_DIR
 
 '''
 fm.constrain_min_enabled(['h2', 'MV_STORE', 'PAGE_STORE'], 2)
@@ -28,3 +22,6 @@ else:
     print('unsatisfiable')
 #solvers[index].add(DistanceSampler.__hamming(origin, target, 1) == index)
 '''
+
+
+

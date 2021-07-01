@@ -21,6 +21,12 @@ class FeatureModel(object):
 
         if mode == 'bitvec':
             self.clauses, self.target = FeatureModel.__convert_dimacs_to_bitvec(self.clauses_raw, len(self.feature_dict))
+
+            # TODO more elegant solution
+            n_options = len(self.feature_dict)
+            self.bitvec_dict = {v: (n_options - k) for k, v in self.feature_dict.items()}
+
+
         elif mode == 'bool':
             self.clauses = self._dimacs_to_boolean()
         else:
@@ -133,8 +139,10 @@ class FeatureModel(object):
         '''
         Create a constraint that
         '''
+
+        # TODO feature order is sooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo confusing
         feature_dict = {v: k for k, v in self.feature_dict.items()}
-        features_indexes = [len(self.feature_dict) - feature_dict[feature] for feature in features]
+        features_indexes = [self.bitvec_dict[feature] for feature in features]
         
         enabled_features = z3.Sum([z3.ZeroExt(len(features), z3.Extract(idx, idx, self.target)) for idx in features_indexes])
         return enabled_features
@@ -147,4 +155,5 @@ class FeatureModel(object):
 
     def constrain_exact_enabled(self, features, n: int):
         self.constraints.append(self._constrain_enabled_features(features) == n)
+
 

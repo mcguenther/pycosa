@@ -13,6 +13,10 @@ class Sampler(metaclass=abc.ABCMeta):
     
     def __init__(self, fm):
         self.fm = fm
+
+        self.target = self.fm.target
+        self.clauses = self.fm.clauses
+        self.constraints = self.fm.constraints
         
     @abc.abstractmethod
     def sample(self, **kwargs) -> pd.DataFrame:
@@ -22,10 +26,52 @@ class Sampler(metaclass=abc.ABCMeta):
         n_options = len(self.fm.feature_dict)
 
         solutions = [FeatureModel.int_to_config(solution.as_long(), n_options) for solution in input_sample]
-        solutions = np.vstack(solutions) == 1
-        solutions = pd.DataFrame(solutions, columns=list(self.fm.feature_dict.values()))
+
+        if len(solutions) > 0:
+            solutions = np.vstack(solutions) == 1
+            solutions = pd.DataFrame(solutions, columns=list(self.fm.feature_dict.values()))
+        else:
+            solutions = None
+            logging.warning('No configurations sampled.')
 
         return solutions
+
+    def exclude_configurations(self, configs: pd.DataFrame):
+        new_constraints = []
+        for config in configs.iterrows():
+            new_constraint = []
+            for feature in configs.columns:
+                idx = self.fm.bitvec_dict[feature]
+                if config[1][feature]:
+                    assignment = z3.Extract(idx, idx, self.fm.target) == 1
+                else:
+                    assignment = z3.Extract(idx, idx, self.fm.target) == 0
+                new_constraint.append(assignment)
+            new_constraint = z3.Not(z3.And(new_constraint))
+            new_constraints.append(new_constraint)
+
+        self.constraints += new_constraints
+
+    def set_partial_configurations(self, enable, disable=[]):
+
+        intersect = set(enable) & set(disable)
+        assert intersect == set([]), 'Cannot both enable and disable feature(s) {} at the same time'.format(intersect)
+
+        enable_constraint = []
+        for feature in enable:
+            idx = self.fm.bitvec_dict[feature]
+            assignment = z3.Extract(idx, idx, self.fm.target) == 1
+            enable_constraint.append(assignment)
+        enable_constraint = z3.And(enable_constraint)
+        self.constraints.append(enable_constraint)
+
+        disable_constraint = []
+        for feature in disable:
+            idx = self.fm.bitvec_dict[feature]
+            assignment = z3.Extract(idx, idx, self.fm.target) == 0
+            disable_constraint.append(assignment)
+        disable_constraint = z3.And(disable_constraint)
+        self.constraints.append(disable_constraint)
 
 class CoverageSampler(Sampler):
     '''
@@ -60,7 +106,7 @@ class CoverageSampler(Sampler):
     '''
     
     def __init__(self, fm):
-        self.fm = fm
+        super().__init__(fm)
     
     def _find_optional_features(self):
         n_options = len(self.fm.feature_dict)
@@ -189,7 +235,7 @@ class DistanceSampler(Sampler):
     '''
     
     def __init__(self, fm: FeatureModel):
-        self.fm = fm
+        super().__init__(fm)
     
     def sample(self, size: int):
         
@@ -257,7 +303,7 @@ class NaiveRandomSampler(Sampler):
     '''
     
     def __init__(self, fm: FeatureModel):
-        self.fm = fm
+        super().__init__(fm)
         
     def sample(self, sample_size: int):  
         clauses = self.fm.clauses
@@ -393,89 +439,3 @@ class BDDSampler(Sampler):
         
         out_sample = pd.concat(samples)
         return out_sample
-                
-class GroupSampler(Sampler):
-
-    def __init__(self, fm: FeatureModel):
-        self.fm = fm
-
-    def _abs(self, x):
-        return z3.If(x >= 0, x, -x)
-
-    def _is_mandatory(self, i):
-        clauses = self.fm.clauses
-        constraints = self.fm.constraints
-        target = self.fm.target
-        n_options = len(self.fm.feature_dict)
-
-        solver = z3.Solver()
-        solver.add(clauses)
-        solver.add(constraints)
-
-        mandatory_constraint = z3.Extract(i, i, target) == 0
-        solver.add(mandatory_constraint)
-
-        return (solver.check() != z3.sat)
-
-    def sample(self, n_groupings: int) -> pd.DataFrame:
-        clauses = self.fm.clauses
-        constraints = self.fm.constraints
-        target = self.fm.target
-        n_options = len(self.fm.feature_dict)
-
-        # number of groups per grouping
-        n_groups = 2#int(np.log2(n_options))
-        groups = [z3.BitVec('group_{}'.format(i), n_options) for i in range(n_groups)]
-
-        # build modified clauses
-        modified_clauses = []
-        for clause in clauses:
-            for group in groups:
-                new_clause = z3.substitute(clause, (target, group))
-                modified_clauses.append(new_clause)
-
-        # build modified constraints
-        modified_constraints = []
-        for constraint in constraints:
-            for group in groups:
-                new_constraint = z3.substitute(constraint, (target, group))
-                modified_constraints.append(constraint)
-
-        # group sampling side constraints
-        side_constraints = []
-        # 1) every group should at least have one feature
-        for group in groups:
-            not_empty_constraint = z3.Sum([z3.ZeroExt(n_options, z3.Extract(i, i, group)) for i in range(n_options)]) > 1
-            side_constraints.append(not_empty_constraint)
-
-        # 2) difference constraint: each feature can only be enabled once in one partition
-        for i in range(n_options):
-            if not self._is_mandatory(i):
-                difference_constraint = z3.Sum([z3.ZeroExt(n_options, z3.Extract(i, i, group)) for group in groups]) == 1
-                side_constraints.append(difference_constraint)
-
-        solver = z3.Optimize()
-        solver.add(modified_clauses)
-        solver.add(modified_constraints)
-        solver.add(side_constraints)
-
-        # 3) balance constraints
-        for group in groups:
-            func = sum([self._abs((n_options // n_groupings) - z3.Sum([z3.ZeroExt(n_options, z3.Extract(i, i, group)) for i in range(n_options)]))])
-            solver.minimize(func)
-
-
-        for i in range(n_groupings):
-            print(i, '----')
-            if solver.check() == z3.sat:
-                solution = solver.model()
-                for group in groups:
-                    x = FeatureModel.int_to_config(solution[group].as_long(), n_options)
-                    print(x)
-                    for group_ in groups:
-                        solver.add(group != solution[group_])
-            else:
-                print('unsat')
-                break
-
-        return None
