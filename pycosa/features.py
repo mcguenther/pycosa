@@ -140,8 +140,6 @@ class FeatureModel(object):
         Create a constraint that
         '''
 
-        # TODO feature order is sooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo confusing
-        feature_dict = {v: k for k, v in self.feature_dict.items()}
         features_indexes = [self.bitvec_dict[feature] for feature in features]
         
         enabled_features = z3.Sum([z3.ZeroExt(len(features), z3.Extract(idx, idx, self.target)) for idx in features_indexes])
@@ -155,5 +153,58 @@ class FeatureModel(object):
 
     def constrain_exact_enabled(self, features, n: int):
         self.constraints.append(self._constrain_enabled_features(features) == n)
+
+    @staticmethod
+    def _compute_partitions(expression, features):
+        expression = expr(expression)
+        bdd = expr2bdd(expression)
+        dotrep = bdd.to_dot()
+        start = dotrep.find('{') + 2
+        end = dotrep.find('}') - 1
+        entities = dotrep[start:end].split(';')
+
+        nodes = list(filter(lambda x: 'shape' in x, entities))
+        nnodes = {}
+        for node in nodes:
+            node = node.strip()
+            name = node.split(' ')[0]
+            label = node.split(' ')[1][1:-1].split(',')[0].replace('label=', '').replace('"', '')
+            nnodes[name] = label
+
+        edges = list(filter(lambda x: '--' in x, entities))
+
+        nedges = {}
+        for edge in edges:
+            edge = edge.strip()
+            fromto = tuple(edge.split(' [')[0].split(' -- '))
+            label = int(edge.split(' [')[1][6:7])
+            nedges[fromto] = label
+
+        G = nx.DiGraph()
+
+        for node in nnodes:
+            G.add_node(node)
+
+        for edge in nedges:
+            G.add_edge(edge[0], edge[1])
+
+        # start node is the node from which edges start, but to which no edge leads
+        start_nodes = set([edge[0] for edge in nedges])
+        end_nodes = set([edge[1] for edge in nedges])
+
+        start_node = list(start_nodes - end_nodes)[0]
+        end_node = list(filter(lambda x: nnodes[x] == '1', nnodes))[0]
+
+        frequencies = {feature: 0 for feature in features}
+        partitions = []
+        overall_size = 0
+        for path in nx.all_simple_edge_paths(G, start_node, end_node):
+            partition_size = 2 ** (len(features) - len(path))
+            partition = {}
+            overall_size += partition_size
+            for edge in path:
+                partition[nnodes[edge[0]]] = bool(nedges[edge])
+            partitions.append(partition)
+        return partitions
 
 
