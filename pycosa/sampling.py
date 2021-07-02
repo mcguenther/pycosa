@@ -54,7 +54,7 @@ class Sampler(metaclass=abc.ABCMeta):
 
     def set_partial_configurations(self, enable=None, disable=None):
 
-        if enable is not None and disable not None:
+        if enable is not None and disable is not None:
             intersect = set(enable) & set(disable)
             assert intersect == set([]), 'Cannot both enable and disable feature(s) {} at the same time'.format(intersect)
 
