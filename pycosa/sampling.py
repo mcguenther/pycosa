@@ -53,29 +53,28 @@ class Sampler(metaclass=abc.ABCMeta):
         self.constraints += new_constraints
 
     def set_partial_configurations(self, enable=None, disable=None):
-        if enable is None:
-            enable = []
-        if disable is None:
-            disable = []
 
-        intersect = set(enable) & set(disable)
-        assert intersect == set([]), 'Cannot both enable and disable feature(s) {} at the same time'.format(intersect)
+        if enable is not None and disable not None:
+            intersect = set(enable) & set(disable)
+            assert intersect == set([]), 'Cannot both enable and disable feature(s) {} at the same time'.format(intersect)
 
-        enable_constraint = []
-        for feature in enable:
-            idx = self.fm.bitvec_dict[feature]
-            assignment = z3.Extract(idx, idx, self.fm.target) == 1
-            enable_constraint.append(assignment)
-        enable_constraint = z3.And(enable_constraint)
-        self.constraints.append(enable_constraint)
-
-        disable_constraint = []
-        for feature in disable:
-            idx = self.fm.bitvec_dict[feature]
-            assignment = z3.Extract(idx, idx, self.fm.target) == 0
-            disable_constraint.append(assignment)
-        disable_constraint = z3.And(disable_constraint)
-        self.constraints.append(disable_constraint)
+        if enable is not None:
+            enable_constraint = []
+            for feature in enable:
+                idx = self.fm.bitvec_dict[feature]
+                assignment = z3.Extract(idx, idx, self.fm.target) == 1
+                enable_constraint.append(assignment)
+            enable_constraint = z3.And(enable_constraint)
+            self.constraints.append(enable_constraint)
+            
+        if disable is not None:
+            disable_constraint = []
+            for feature in disable:
+                idx = self.fm.bitvec_dict[feature]
+                assignment = z3.Extract(idx, idx, self.fm.target) == 0
+                disable_constraint.append(assignment)
+            disable_constraint = z3.And(disable_constraint)
+            self.constraints.append(disable_constraint)
 
 class CoverageSampler(Sampler):
     '''
